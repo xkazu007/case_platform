@@ -1,8 +1,11 @@
 // Case Detail Page — Professor Preview
 const { Icon: DI, DifficultyBadge: DDB } = window.ABS_UI;
 
-function DetailView({ c, onBack, onOpenReader, onRequestCase, onOpenTN }) {
+function DetailView({ c, onBack, onOpenReader, onRequestCase, onOpenTN, role }) {
   if (!c) return null;
+  // Item 3: multiple authors
+  const authorLine = (c.authors || [c.author]).join(", ");
+
   return (
     <div>
       {/* Hero */}
@@ -21,11 +24,13 @@ function DetailView({ c, onBack, onOpenReader, onRequestCase, onOpenTN }) {
         <h1 style={{maxWidth:920,margin:"0 0 18px"}}>{c.title}</h1>
 
         <div style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap",fontSize:14,color:"var(--on-surface-variant)"}}>
-          <span><strong style={{color:"var(--on-surface)",fontWeight:600}}>{c.author}</strong> · {c.institution}</span>
+          {/* Item 3: show all authors */}
+          <span><strong style={{color:"var(--on-surface)",fontWeight:600}}>{authorLine}</strong> · {c.institution}</span>
           <span className="dot-sep">·</span>
           <span className="tnum">{c.year}</span>
           <span className="dot-sep">·</span>
-          <DDB level={c.difficulty}/>
+          {/* Item 5: use programLevel */}
+          <DDB level={c.programLevel}/>
           <span className="dot-sep">·</span>
           <span style={{display:"inline-flex",alignItems:"center",gap:6}}><DI name="globe" size={13}/>{c.language}</span>
           <span className="dot-sep">·</span>
@@ -44,10 +49,34 @@ function DetailView({ c, onBack, onOpenReader, onRequestCase, onOpenTN }) {
             </p>
           </div>
 
+          {/* Item 7: keywords on detail page */}
+          {c.keywords && c.keywords.length > 0 && (
+            <div style={{marginBottom:28}}>
+              <div className="label-caps" style={{marginBottom:10}}>Keywords</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+                {c.keywords.map(kw => (
+                  <span key={kw} style={{padding:"4px 10px",background:"var(--surface-container)",border:"1px solid var(--outline-variant)",borderRadius:"var(--r-full)",fontSize:12,fontWeight:500,color:"var(--on-surface)"}}>
+                    {kw}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="label-caps" style={{marginTop:24}}>Setting</div>
           <p style={{marginTop:10,fontSize:15,lineHeight:1.7,color:"var(--on-surface)"}}>
             Set in {c.country} between 2022 and 2025, the case follows the leadership team of {c.company} as they confront a structural decision with continental implications. Written from sixteen interviews with executives, board members and external stakeholders, the case is intended for use in graduate and executive courses in {c.discipline.toLowerCase()}.
           </p>
+
+          {/* Item 4: African countries */}
+          {c.countries && c.countries.length > 0 && (
+            <div style={{marginTop:20,display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",fontSize:13,color:"var(--on-surface-variant)"}}>
+              <span style={{fontWeight:700,color:"var(--on-surface)"}}>Countries covered:</span>
+              {c.countries.map(co => (
+                <span key={co} style={{padding:"2px 8px",background:"var(--surface-container)",borderRadius:"var(--r-full)",fontSize:11,fontWeight:600}}>{co}</span>
+              ))}
+            </div>
+          )}
 
           <div className="label-caps" style={{marginTop:32}}>Suggested Discussion</div>
           <ul className="sq-list" style={{marginTop:12,fontSize:14.5,color:"var(--on-surface)"}}>
@@ -60,7 +89,10 @@ function DetailView({ c, onBack, onOpenReader, onRequestCase, onOpenTN }) {
           <div className="label-caps" style={{marginTop:36}}>Included Materials</div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:12}}>
             <MaterialCard icon="file" title="Case (PDF)" sub="32 pages · 4 exhibits" available/>
-            <MaterialCard icon="note" title="Teaching Note" sub="Faculty only · 14 pages" available={c.flags.hasTN} onClick={c.flags.hasTN ? onOpenTN : undefined}/>
+            {/* Item 13: Teaching Note visible only for professor/editor roles, never student */}
+            {role !== "student" && (
+              <MaterialCard icon="note" title="Teaching Note" sub="Faculty only · 14 pages" available={c.flags.hasTN} onClick={c.flags.hasTN ? onOpenTN : undefined}/>
+            )}
             <MaterialCard icon="video" title="Video Briefing" sub="11 min · interview" available={c.flags.hasVideo}/>
             <MaterialCard icon="grid" title="Excel Model" sub="Sensitivity workbook" available={false}/>
           </div>
@@ -99,17 +131,21 @@ function DetailView({ c, onBack, onOpenReader, onRequestCase, onOpenTN }) {
             </div>
           </div>
 
-          {/* Author card */}
+          {/* Author card — Item 3: multiple authors */}
           <div className="card" style={{padding:20}}>
-            <div className="label-caps label-caps-muted">Lead Author</div>
-            <div style={{display:"flex",gap:12,alignItems:"center",marginTop:12}}>
-              <div style={{width:48,height:48,borderRadius:"50%",background:"var(--primary-container)",color:"white",display:"grid",placeItems:"center",fontFamily:"Epilogue",fontWeight:700,fontSize:18}}>
-                {c.author.split(" ").slice(-2).map(s=>s[0]).join("")}
-              </div>
-              <div>
-                <div style={{fontWeight:600,fontSize:14}}>{c.author}</div>
-                <div style={{fontSize:12,color:"var(--on-surface-variant)"}}>{c.institution}</div>
-              </div>
+            <div className="label-caps label-caps-muted">{(c.authors||[]).length > 1 ? "Authors" : "Lead Author"}</div>
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginTop:12}}>
+              {(c.authors||[c.author]).map((author, i) => (
+                <div key={i} style={{display:"flex",gap:12,alignItems:"center"}}>
+                  <div style={{width:40,height:40,borderRadius:"50%",background: i===0 ? "var(--primary-container)" : "var(--surface-container-high)",color: i===0 ? "white" : "var(--on-surface-variant)",display:"grid",placeItems:"center",fontFamily:"Epilogue",fontWeight:700,fontSize:15,flexShrink:0}}>
+                    {author.split(" ").slice(-2).map(s=>s[0]).join("")}
+                  </div>
+                  <div>
+                    <div style={{fontWeight:600,fontSize:14}}>{author}</div>
+                    {i === 0 && <div style={{fontSize:12,color:"var(--on-surface-variant)"}}>{c.institution}</div>}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </aside>
@@ -121,7 +157,7 @@ function DetailView({ c, onBack, onOpenReader, onRequestCase, onOpenTN }) {
 function MaterialCard({ icon, title, sub, available, onClick }) {
   return (
     <div onClick={available?onClick:undefined} className="card" style={{
-      padding:14,minWidth:200,flex:1,display:"flex",alignItems:"center",gap:12,
+      padding:14,minWidth:180,flex:1,display:"flex",alignItems:"center",gap:12,
       opacity: available ? 1 : 0.45,
       cursor: available && onClick ? "pointer" : "default",
       transition:"var(--t)",

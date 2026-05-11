@@ -155,7 +155,7 @@ function App() {
             <CatalogView onOpenCase={openCase} onRequestCase={openRequest}/>
           )}
           {role === "professor" && view.name === "detail" && (
-            <DetailView c={view.c} onBack={backToCatalog} onOpenReader={openReader} onRequestCase={()=>openRequest(view.c)} onOpenTN={()=>openTN(view.c)}/>
+            <DetailView c={view.c} onBack={backToCatalog} onOpenReader={openReader} onRequestCase={()=>openRequest(view.c)} onOpenTN={()=>openTN(view.c)} role={role}/>
           )}
           {role === "professor" && view.name === "reader" && (
             <ReaderView onExit={()=>setView({name:"detail", c: view.c || defaultCase})}/>

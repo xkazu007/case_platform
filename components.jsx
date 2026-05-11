@@ -40,6 +40,9 @@ const Icon = ({ name, size = 16, stroke = 1.6 }) => {
     warn: <><path d="M12 3 2 21h20Z"/><path d="M12 10v5M12 18h0"/></>,
     arrL: <><path d="M19 12H5M12 19l-7-7 7-7"/></>,
     arrR: <><path d="M5 12h14M12 5l7 7-7 7"/></>,
+    mail: <><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></>,
+    print: <><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></>,
+    question: <><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3"/><path d="M12 17h0"/></>,
   };
   return <svg {...props}>{paths[name]}</svg>;
 };
@@ -124,21 +127,126 @@ const Pill = ({ children, tone="neutral" }) => {
   return <span style={{background:t.bg,color:t.color,padding:"2px 8px",borderRadius:"999px",fontSize:11,fontWeight:700,letterSpacing:"0.04em"}}>{children}</span>;
 };
 
-// ─── Difficulty badge ───────────────────────────────────────────────
+// ─── Program level badge (replaces Difficulty badge) ───────────────────────────────────────────────
 const DifficultyBadge = ({ level }) => {
-  const map = { Core:1, Advanced:2, Executive:3 };
+  const map = {
+    "Bachelor": 1,
+    "Pre-experience Masters": 2,
+    "Post-experience Masters": 3,
+    "Advanced Executive Education": 4,
+    // legacy fallback
+    "Core": 1, "Advanced": 2, "Executive": 3,
+  };
+  const max = level === "Advanced Executive Education" ? 4 : 3;
   const lvl = map[level] || 1;
+  const short = {
+    "Bachelor": "Bachelor",
+    "Pre-experience Masters": "Pre-exp Masters",
+    "Post-experience Masters": "Post-exp Masters",
+    "Advanced Executive Education": "Exec Education",
+    "Core": "Core", "Advanced": "Advanced", "Executive": "Executive",
+  };
   return (
-    <span style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:11,fontWeight:700,letterSpacing:"0.06em",color:"var(--on-surface-variant)"}}>
-      {[1,2,3].map(i => (
+    <span style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:11,fontWeight:700,letterSpacing:"0.06em",color:"var(--on-surface-variant)"}}>
+      {[1,2,3,4].slice(0, max).map(i => (
         <span key={i} style={{
-          width: 4 + (i*1), height: 8 + (i*2),
+          width: 3 + i, height: 7 + (i*1.5),
           background: i <= lvl ? "var(--primary-container)" : "var(--outline-variant)",
+          borderRadius: 1,
         }}/>
       ))}
-      <span style={{textTransform:"uppercase",marginLeft:2}}>{level}</span>
+      <span style={{textTransform:"uppercase",marginLeft:2,maxWidth:110,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{short[level] || level}</span>
     </span>
   );
 };
 
-window.ABS_UI = { Icon, Brand, useToasts, Switch, Check, FilterGroup, Pill, DifficultyBadge };
+// ─── Tag input ───────────────────────────────────────────────
+const TagInput = ({ tags, onChange, placeholder = "Type and press Enter…", suggestions = [] }) => {
+  const [input, setInput] = useState("");
+  const [showSug, setShowSug] = useState(false);
+  const inputRef = useRef(null);
+
+  const filtered = suggestions.filter(
+    s => s.toLowerCase().includes(input.toLowerCase()) && !tags.includes(s)
+  );
+
+  const addTag = (tag) => {
+    const t = tag.trim();
+    if (t && !tags.includes(t)) onChange([...tags, t]);
+    setInput("");
+    setShowSug(false);
+    inputRef.current?.focus();
+  };
+
+  const removeTag = (tag) => onChange(tags.filter(t => t !== tag));
+
+  const handleKeyDown = (e) => {
+    if ((e.key === "Enter" || e.key === ",") && input.trim()) {
+      e.preventDefault();
+      addTag(input);
+    } else if (e.key === "Backspace" && !input && tags.length > 0) {
+      removeTag(tags[tags.length - 1]);
+    }
+  };
+
+  return (
+    <div style={{position:"relative"}}>
+      <div
+        className="input"
+        style={{display:"flex",flexWrap:"wrap",gap:5,padding:"6px 10px",minHeight:44,alignItems:"center",cursor:"text",height:"auto"}}
+        onClick={() => inputRef.current?.focus()}
+      >
+        {tags.map(t => (
+          <span key={t} style={{
+            display:"inline-flex",alignItems:"center",gap:4,
+            background:"var(--surface-container-high)",
+            border:"1px solid var(--outline-variant)",
+            borderRadius:"var(--r-full)",
+            padding:"3px 8px",fontSize:12,fontWeight:500,
+            color:"var(--on-surface)",flexShrink:0,
+          }}>
+            {t}
+            <button
+              type="button"
+              onClick={e=>{e.stopPropagation();removeTag(t);}}
+              style={{background:"transparent",border:0,padding:0,cursor:"pointer",color:"var(--on-surface-variant)",display:"flex",lineHeight:1}}
+            >
+              <Icon name="x" size={10} stroke={2.2}/>
+            </button>
+          </span>
+        ))}
+        <input
+          ref={inputRef}
+          value={input}
+          onChange={e=>{setInput(e.target.value);setShowSug(true);}}
+          onKeyDown={handleKeyDown}
+          onFocus={()=>setShowSug(true)}
+          onBlur={()=>setTimeout(()=>setShowSug(false),160)}
+          placeholder={tags.length === 0 ? placeholder : ""}
+          style={{border:0,outline:0,background:"transparent",fontSize:13,flex:1,minWidth:80,padding:"2px 0",fontFamily:"Manrope",color:"var(--on-surface)"}}
+        />
+      </div>
+      {showSug && input && filtered.length > 0 && (
+        <div style={{
+          position:"absolute",top:"100%",left:0,right:0,
+          background:"white",border:"1px solid var(--outline-variant)",
+          borderRadius:"var(--r-default)",boxShadow:"var(--shadow-2)",
+          zIndex:50,maxHeight:200,overflowY:"auto",marginTop:2,
+        }}>
+          {filtered.slice(0,8).map(s => (
+            <button
+              key={s}
+              type="button"
+              onMouseDown={()=>addTag(s)}
+              style={{display:"block",width:"100%",textAlign:"left",padding:"8px 12px",background:"transparent",border:0,cursor:"pointer",fontSize:13,fontFamily:"Manrope",color:"var(--on-surface)"}}
+              onMouseEnter={e=>e.currentTarget.style.background="var(--surface-container)"}
+              onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+            >{s}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+window.ABS_UI = { Icon, Brand, useToasts, Switch, Check, FilterGroup, Pill, DifficultyBadge, TagInput };

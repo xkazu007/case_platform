@@ -1,12 +1,15 @@
 // Request Form — Professor view
 const { Icon: RFI } = window.ABS_UI;
+const { PROGRAMS } = window.ABS_DATA;
 
 function RequestView({ c, onSubmit, onCancel }) {
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
     moduleName: "",
-    semester: "Fall 2026",
-    program: "EMBA · Strategy in Emerging Markets",
+    // Item 1: start/end dates replace semester
+    startDate: "",
+    endDate: "",
+    program: PROGRAMS[1] || "EMBA",
     students: 42,
     context: "",
     discussionLeader: "Dr. Salma Bennani (lead author available)",
@@ -15,7 +18,7 @@ function RequestView({ c, onSubmit, onCancel }) {
   });
 
   const update = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const isValid = form.moduleName.trim().length > 2 && form.context.trim().length > 20;
+  const isValid = form.moduleName.trim().length > 2 && form.context.trim().length > 20 && form.startDate && form.endDate;
 
   const submit = (e) => {
     e.preventDefault();
@@ -61,23 +64,20 @@ function RequestView({ c, onSubmit, onCancel }) {
             <Field label="Module Name" required>
               <input className="input" placeholder="e.g. Strategy in Emerging Markets" value={form.moduleName} onChange={e=>update("moduleName", e.target.value)}/>
             </Field>
+            {/* Item 2: dynamic programs list from data */}
             <Field label="Program">
               <select className="select" value={form.program} onChange={e=>update("program", e.target.value)}>
-                <option>EMBA · Strategy in Emerging Markets</option>
-                <option>MBA · Core</option>
-                <option>MSc Finance</option>
-                <option>MSc Sustainability</option>
-                <option>Executive Certificate · Pan-African Leadership</option>
-                <option>Doctoral Program</option>
+                {PROGRAMS.map(p => <option key={p}>{p}</option>)}
               </select>
             </Field>
-            <Field label="Semester / Cohort">
-              <select className="select" value={form.semester} onChange={e=>update("semester", e.target.value)}>
-                <option>Fall 2026</option>
-                <option>Spring 2026</option>
-                <option>Summer 2026 Intensive</option>
-                <option>Winter 2027</option>
-              </select>
+            {/* Item 1: Start Date + End Date replace Semester dropdown */}
+            <Field label="Start Date" required>
+              <input className="input" type="date" value={form.startDate} onChange={e=>update("startDate", e.target.value)}/>
+            </Field>
+            <Field label="End Date" required>
+              <input className="input" type="date" value={form.endDate} onChange={e=>update("endDate", e.target.value)}
+                min={form.startDate}
+              />
             </Field>
             <Field label="Estimated Student Count">
               <input className="input tnum" type="number" min="1" max="500" value={form.students} onChange={e=>update("students", parseInt(e.target.value) || 0)}/>
@@ -107,7 +107,7 @@ function RequestView({ c, onSubmit, onCancel }) {
             {[
               { id:"1-week", label:"1 week", sub:"Compressed reading" },
               { id:"2-week", label:"2 weeks", sub:"Standard window" },
-              { id:"semester", label:"Full semester", sub:"Multi-touch use" },
+              { id:"semester", label:"Full term", sub:"Multi-touch use" },
             ].map(opt => (
               <label key={opt.id} style={{
                 padding:"16px 18px",border:`1.5px solid ${form.accessWindow===opt.id?"var(--primary-container)":"var(--outline-variant)"}`,
@@ -188,13 +188,18 @@ function ToggleRow({ label, sub, checked, onChange, disabled }) {
 }
 
 function SubmittedScreen({ c, form, onDone }) {
+  // Item 1: display start/end dates instead of semester
+  const dateRange = form.startDate && form.endDate
+    ? `${form.startDate} → ${form.endDate}`
+    : "—";
+
   return (
     <div style={{maxWidth:600,margin:"0 auto",padding:"80px 24px",textAlign:"center"}}>
       <div className="check-circle"></div>
       <div className="label-caps">Submitted · Reference #2026-0847</div>
       <h1 style={{margin:"12px 0 14px"}}>Request received.</h1>
       <p className="muted" style={{fontSize:16,maxWidth:480,margin:"0 auto 32px",lineHeight:1.6}}>
-        The editorial board has been notified. You'll receive a confirmation email at <strong style={{color:"var(--on-surface)"}}>your.email@um6p.ma</strong> within two business days, with a shareable student access link scoped to <strong style={{color:"var(--on-surface)"}}>{form.semester}</strong>.
+        The editorial board has been notified. You'll receive a confirmation email at <strong style={{color:"var(--on-surface)"}}>your.email@um6p.ma</strong> within two business days, with a shareable student access link valid for the dates requested.
       </p>
 
       <div className="card" style={{padding:24,textAlign:"left",marginBottom:32}}>
@@ -204,7 +209,8 @@ function SubmittedScreen({ c, form, onDone }) {
             <tr><td style={{padding:"8px 0",color:"var(--on-surface-variant)",width:160}}>Case</td><td style={{fontWeight:600}}>{c?.title}</td></tr>
             <tr><td style={{padding:"8px 0",color:"var(--on-surface-variant)"}}>Module</td><td>{form.moduleName}</td></tr>
             <tr><td style={{padding:"8px 0",color:"var(--on-surface-variant)"}}>Program</td><td>{form.program}</td></tr>
-            <tr><td style={{padding:"8px 0",color:"var(--on-surface-variant)"}}>Cohort</td><td>{form.semester} · <span className="tnum">{form.students}</span> students</td></tr>
+            <tr><td style={{padding:"8px 0",color:"var(--on-surface-variant)"}}>Access dates</td><td className="tnum">{dateRange}</td></tr>
+            <tr><td style={{padding:"8px 0",color:"var(--on-surface-variant)"}}>Students</td><td className="tnum">{form.students}</td></tr>
             <tr><td style={{padding:"8px 0",color:"var(--on-surface-variant)"}}>Window</td><td>{form.accessWindow}</td></tr>
           </tbody>
         </table>

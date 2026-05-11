@@ -1,16 +1,17 @@
 // Case Catalog — Professor view
 const { Icon, FilterGroup, Switch, Check, Pill, DifficultyBadge } = window.ABS_UI;
-const { DISCIPLINES, INDUSTRIES, GEO, LANGS, DIFFS, CASES } = window.ABS_DATA;
+const { DISCIPLINES, INDUSTRIES, LANGS, PROGRAM_LEVELS, AFRICAN_COUNTRY_COUNTS, CASES } = window.ABS_DATA;
 
 function CatalogView({ onOpenCase, onRequestCase }) {
   const [query, setQuery] = useState("");
-  const [quickFlags, setQuickFlags] = useState({ bestseller: false, classic: false, isNew: false });
+  // Item 8: removed "classic" from quick filters
+  const [quickFlags, setQuickFlags] = useState({ bestseller: false, isNew: false });
   const [materials, setMaterials] = useState({ hasTN: false, hasVideo: false });
   const [disciplines, setDisciplines] = useState({});
   const [industries, setIndustries] = useState({});
-  const [geos, setGeos] = useState({});
+  const [countries, setCountries] = useState({});
   const [langs, setLangs] = useState({});
-  const [diffs, setDiffs] = useState({});
+  const [levels, setLevels] = useState({});
   const [sort, setSort] = useState("relevance");
 
   const toggleSet = (setter) => (key) => (val) => setter(s => ({ ...s, [key]: val }));
@@ -19,38 +20,40 @@ function CatalogView({ onOpenCase, onRequestCase }) {
     const q = query.trim().toLowerCase();
     const anyChecked = (obj) => Object.values(obj).some(Boolean);
     let r = CASES.filter(c => {
-      if (q && !(`${c.title} ${c.company} ${c.author} ${c.country} ${c.discipline}`.toLowerCase().includes(q))) return false;
+      // Item 7: keywords included in search
+      if (q && !(`${c.title} ${c.company} ${(c.authors||[]).join(" ")} ${c.country} ${c.discipline} ${(c.keywords||[]).join(" ")}`.toLowerCase().includes(q))) return false;
       if (quickFlags.bestseller && !c.flags.bestseller) return false;
-      if (quickFlags.classic && !c.flags.classic) return false;
       if (quickFlags.isNew && !c.flags.isNew) return false;
       if (materials.hasTN && !c.flags.hasTN) return false;
       if (materials.hasVideo && !c.flags.hasVideo) return false;
       if (anyChecked(disciplines) && !disciplines[c.discipline]) return false;
       if (anyChecked(industries) && !industries[c.industry]) return false;
-      if (anyChecked(geos) && !geos[c.geo]) return false;
+      // Item 4: country filter checks against c.countries array
+      if (anyChecked(countries) && !(c.countries||[]).some(co => countries[co])) return false;
       if (anyChecked(langs) && !langs[c.language]) return false;
-      if (anyChecked(diffs) && !diffs[c.difficulty]) return false;
+      // Item 5: filter on programLevel
+      if (anyChecked(levels) && !levels[c.programLevel]) return false;
       return true;
     });
     if (sort === "year") r = [...r].sort((a,b) => b.year - a.year);
     else if (sort === "popular") r = [...r].sort((a,b) => b.usage.times - a.usage.times);
     else if (sort === "az") r = [...r].sort((a,b) => a.title.localeCompare(b.title));
     return r;
-  }, [query, quickFlags, materials, disciplines, industries, geos, langs, diffs, sort]);
+  }, [query, quickFlags, materials, disciplines, industries, countries, langs, levels, sort]);
 
   const activeFilterCount =
     Object.values(quickFlags).filter(Boolean).length +
     Object.values(materials).filter(Boolean).length +
     Object.values(disciplines).filter(Boolean).length +
     Object.values(industries).filter(Boolean).length +
-    Object.values(geos).filter(Boolean).length +
+    Object.values(countries).filter(Boolean).length +
     Object.values(langs).filter(Boolean).length +
-    Object.values(diffs).filter(Boolean).length;
+    Object.values(levels).filter(Boolean).length;
 
   const clearAll = () => {
-    setQuickFlags({ bestseller:false, classic:false, isNew:false });
+    setQuickFlags({ bestseller:false, isNew:false });
     setMaterials({ hasTN:false, hasVideo:false });
-    setDisciplines({}); setIndustries({}); setGeos({}); setLangs({}); setDiffs({});
+    setDisciplines({}); setIndustries({}); setCountries({}); setLangs({}); setLevels({});
     setQuery("");
   };
 
@@ -95,9 +98,9 @@ function CatalogView({ onOpenCase, onRequestCase }) {
             )}
           </div>
 
+          {/* Item 8: "Classic" removed — only Bestseller and New remain */}
           <FilterGroup title="Quick Filters">
             <Switch checked={quickFlags.bestseller} onChange={v=>setQuickFlags(s=>({...s,bestseller:v}))} label="Bestseller"/>
-            <Switch checked={quickFlags.classic} onChange={v=>setQuickFlags(s=>({...s,classic:v}))} label="Classic"/>
             <Switch checked={quickFlags.isNew} onChange={v=>setQuickFlags(s=>({...s,isNew:v}))} label="New"/>
           </FilterGroup>
 
@@ -120,10 +123,13 @@ function CatalogView({ onOpenCase, onRequestCase }) {
             ))}
           </FilterGroup>
 
-          <FilterGroup title="Geographic Focus" defaultOpen={false}>
-            {GEO.map(([name, count]) => (
-              <Check key={name} label={name} count={count} checked={!!geos[name]} onChange={toggleSet(setGeos)(name)}/>
-            ))}
+          {/* Item 4: African Country selector replaces Geographic Focus */}
+          <FilterGroup title="African Country" defaultOpen={false}>
+            <div className="scroll-y" style={{maxHeight:240}}>
+              {AFRICAN_COUNTRY_COUNTS.map(([name, count]) => (
+                <Check key={name} label={name} count={count} checked={!!countries[name]} onChange={toggleSet(setCountries)(name)}/>
+              ))}
+            </div>
           </FilterGroup>
 
           <FilterGroup title="Language" defaultOpen={false}>
@@ -132,9 +138,10 @@ function CatalogView({ onOpenCase, onRequestCase }) {
             ))}
           </FilterGroup>
 
-          <FilterGroup title="Difficulty" defaultOpen={false}>
-            {DIFFS.map(([name, count]) => (
-              <Check key={name} label={name} count={count} checked={!!diffs[name]} onChange={toggleSet(setDiffs)(name)}/>
+          {/* Item 5: Program Level replaces Difficulty */}
+          <FilterGroup title="Program Level" defaultOpen={false}>
+            {PROGRAM_LEVELS.map(([name, count]) => (
+              <Check key={name} label={name} count={count} checked={!!levels[name]} onChange={toggleSet(setLevels)(name)}/>
             ))}
           </FilterGroup>
         </aside>
@@ -168,6 +175,9 @@ function CatalogView({ onOpenCase, onRequestCase }) {
 }
 
 function CaseCard({ c, onOpen, onRequest }) {
+  // Item 3: display multiple authors
+  const authorLine = (c.authors||[c.author]).join(", ");
+
   return (
     <article className="card-shadow" style={{padding:24,display:"flex",flexDirection:"column",gap:14}}>
       {/* Top row: chips + flag dots */}
@@ -206,17 +216,28 @@ function CaseCard({ c, onOpen, onRequest }) {
       {/* Author + meta */}
       <div style={{paddingTop:12,borderTop:"1px solid var(--outline-variant)",display:"flex",flexDirection:"column",gap:8}}>
         <div style={{fontSize:12,color:"var(--on-surface-variant)"}}>
-          <span style={{color:"var(--on-surface)",fontWeight:600}}>{c.author}</span>
+          {/* Item 3: show all authors */}
+          <span style={{color:"var(--on-surface)",fontWeight:600}}>{authorLine}</span>
           <span className="dot-sep">·</span>
           <span className="tnum">{c.year}</span>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:14,fontSize:11.5,color:"var(--on-surface-variant)",flexWrap:"wrap"}}>
-          <DifficultyBadge level={c.difficulty}/>
+          {/* Item 5: use programLevel */}
+          <DifficultyBadge level={c.programLevel}/>
           <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="globe" size={12}/>{c.language}</span>
           <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="clock" size={12}/>{c.readingMin} min</span>
           {c.flags.hasVideo && <span style={{display:"flex",alignItems:"center",gap:5,color:"var(--primary-container)"}}><Icon name="video" size={12}/>Video</span>}
+          {/* Item 13: TN badge stays in professor catalog — catalog is professor-only */}
           {c.flags.hasTN && <span style={{display:"flex",alignItems:"center",gap:5}}><Icon name="note" size={12}/>TN</span>}
         </div>
+        {/* Item 7: show keywords if present */}
+        {c.keywords && c.keywords.length > 0 && (
+          <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:2}}>
+            {c.keywords.slice(0,3).map(kw => (
+              <span key={kw} style={{fontSize:10,padding:"2px 6px",background:"var(--surface-container)",borderRadius:"var(--r-full)",color:"var(--on-surface-variant)",fontWeight:500}}>{kw}</span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Actions */}

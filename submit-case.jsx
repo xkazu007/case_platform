@@ -1,5 +1,6 @@
 // Submit New Case — multi-step form for authors / editors
-const { Icon: SI } = window.ABS_UI;
+const { Icon: SI, TagInput } = window.ABS_UI;
+const { CASE_TYPES_LIST, PROGRAM_LEVELS, AFRICAN_COUNTRIES, KEYWORD_SUGGESTIONS } = window.ABS_DATA;
 
 const STEPS = [
   { id: "meta", label: "Case Metadata" },
@@ -12,6 +13,17 @@ const STEPS = [
 const DISCIPLINE_OPTS = ["Strategy","Finance","Marketing","Entrepreneurship","Operations Management","General Management","International Business","HR Management","Information Technology","Accounting","Economics","Business Ethics","Negotiation","Organizational Behavior","Sales","Service Management","Social Enterprise"];
 const INDUSTRY_OPTS = ["Agriculture & Food","Energy & Transition","Financial Services","Goods & Consumer Services","Healthcare","Industrial","IT & Telecom","Mining & Natural Resources","Public Administration & Nonprofits"];
 
+// Item 6: full case type descriptions for form dropdown
+const CASE_TYPE_LABELS = {
+  "Field Case": "Field Case — primary research (interviews, observations)",
+  "Library Case": "Library Case — secondary sources only",
+  "Fictitious Case": "Fictitious Case",
+  "Compact · 1–5p": "Compact Case — 1 to 5 pages",
+  "Compact · 6–10p": "Compact Case — 6 to 10 pages",
+  "Compact · 10+p": "Compact Case — 10+ pages",
+  "Video Case": "Video Case",
+};
+
 function SubmitCaseView({ onCancel, onSubmit }) {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -19,16 +31,20 @@ function SubmitCaseView({ onCancel, onSubmit }) {
     title: "",
     company: "",
     country: "",
+    // Item 4: African countries multi-select
+    countries: [],
     discipline: "",
     industry: "",
-    geo: "Pan-Africa",
+    // Item 6: updated case types
     type: "Field Case",
-    difficulty: "Advanced",
+    // Item 5: program level replaces difficulty
+    programLevel: "Post-experience Masters",
     language: "English",
     year: 2026,
     abstract: "",
     setting: "",
-    keywords: "",
+    // Item 7: keywords as array
+    keywords: [],
     files: [
       { id: "f1", name: "OCP-FieldCase-v3.pdf", size: "1.4 MB", kind: "case", uploaded: true },
     ],
@@ -38,7 +54,8 @@ function SubmitCaseView({ onCancel, onSubmit }) {
     learningObjectives: ["", "", ""],
     discussionQuestions: ["", ""],
     sessionMinutes: 90,
-    coAuthors: "",
+    // Item 3: authors as array
+    authors: [],
     consent: false,
     rights: false,
   });
@@ -86,13 +103,11 @@ function SubmitCaseView({ onCancel, onSubmit }) {
           {STEPS.map((s, i) => {
             const isActive = i === step;
             const isDone = i < step && stepValid(i);
-            const valid = stepValid(i);
             return (
               <React.Fragment key={s.id}>
                 <button onClick={() => setStep(i)} style={{
                   display: "flex", alignItems: "center", gap: 10,
-                  background: "transparent", border: 0, cursor: "pointer",
-                  padding: "12px 0",
+                  background: "transparent", border: 0, cursor: "pointer", padding: "12px 0",
                   color: isActive ? "var(--on-surface)" : "var(--on-surface-variant)",
                 }}>
                   <span style={{
@@ -123,7 +138,6 @@ function SubmitCaseView({ onCancel, onSubmit }) {
           {step === 3 && <StepPedagogy form={form} update={update} updateAt={updateAt} addItem={addItem} removeItem={removeItem} />}
           {step === 4 && <StepReview form={form} update={update} stepValid={stepValid} setStep={setStep} />}
 
-          {/* Nav */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 36, paddingTop: 24, borderTop: "1px solid var(--outline-variant)" }}>
             <button className="btn btn-ghost" onClick={prev} disabled={step === 0} style={{ opacity: step === 0 ? 0.4 : 1 }}>
               <SI name="arrL" size={13} /> Previous
@@ -165,6 +179,16 @@ function StepMeta({ form, update }) {
       <Field label="Working Title" required>
         <input className="input" placeholder="e.g. OCP Group: Phosphate, Power and the Pan-African Pivot" value={form.title} onChange={(e) => update("title", e.target.value)} />
       </Field>
+
+      {/* Item 3: multi-author tag input */}
+      <Field label="Authors" hint="Add each author as a tag — press Enter or comma to confirm.">
+        <TagInput
+          tags={form.authors}
+          onChange={(tags) => update("authors", tags)}
+          placeholder="e.g. Dr. Salma Bennani…"
+        />
+      </Field>
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
         <Field label="Protagonist Company" required>
           <input className="input" placeholder="e.g. OCP Group" value={form.company} onChange={(e) => update("company", e.target.value)} />
@@ -184,29 +208,51 @@ function StepMeta({ form, update }) {
             {INDUSTRY_OPTS.map((d) => <option key={d}>{d}</option>)}
           </select>
         </Field>
-        <Field label="Geographic Focus">
-          <select className="select" value={form.geo} onChange={(e) => update("geo", e.target.value)}>
-            <option>Morocco</option><option>Pan-Africa</option><option>Global</option>
-          </select>
-        </Field>
+
+        {/* Item 6: updated case types */}
         <Field label="Case Type">
           <select className="select" value={form.type} onChange={(e) => update("type", e.target.value)}>
-            <option>Field Case</option><option>Published Case</option><option>Library Case</option><option>Compact Case</option>
+            {CASE_TYPES_LIST.map((t) => (
+              <option key={t} value={t}>{CASE_TYPE_LABELS[t] || t}</option>
+            ))}
           </select>
         </Field>
-        <Field label="Difficulty">
-          <select className="select" value={form.difficulty} onChange={(e) => update("difficulty", e.target.value)}>
-            <option>Core</option><option>Advanced</option><option>Executive</option>
+
+        {/* Item 5: Program Level replaces Difficulty */}
+        <Field label="Program Level">
+          <select className="select" value={form.programLevel} onChange={(e) => update("programLevel", e.target.value)}>
+            {PROGRAM_LEVELS.map(([lvl]) => <option key={lvl}>{lvl}</option>)}
           </select>
         </Field>
+
         <Field label="Language">
           <select className="select" value={form.language} onChange={(e) => update("language", e.target.value)}>
             <option>English</option><option>French</option><option>Bilingual</option>
           </select>
         </Field>
+        <Field label="Year">
+          <input className="input tnum" type="number" min="2000" max="2030" value={form.year} onChange={(e) => update("year", parseInt(e.target.value) || 2026)} />
+        </Field>
       </div>
-      <Field label="Keywords" hint="Comma-separated — used for search and discoverability.">
-        <input className="input" placeholder="vertical integration, fertilizer, capital allocation" value={form.keywords} onChange={(e) => update("keywords", e.target.value)} />
+
+      {/* Item 4: African Country multi-select as tag input */}
+      <Field label="African Countries" hint="Select the African countries where this case is set.">
+        <TagInput
+          tags={form.countries}
+          onChange={(tags) => update("countries", tags)}
+          placeholder="Type a country name…"
+          suggestions={AFRICAN_COUNTRIES}
+        />
+      </Field>
+
+      {/* Item 7: Keywords tag input with vocabulary suggestions */}
+      <Field label="Keywords" hint="Add keywords that help faculty discover this case. Press Enter to confirm each one.">
+        <TagInput
+          tags={form.keywords}
+          onChange={(tags) => update("keywords", tags)}
+          placeholder="e.g. vertical integration, AfCFTA…"
+          suggestions={KEYWORD_SUGGESTIONS}
+        />
       </Field>
     </div>
   );
@@ -218,7 +264,7 @@ function StepAbstract({ form, update }) {
     <div>
       <SectionHead title="Abstract & Setting" sub="What's the strategic problem? Reviewers read the abstract first." />
       <Field label="Abstract" required hint="Two to three paragraphs. State the decision, the protagonist, the time horizon, and what's at stake.">
-        <textarea className="textarea" style={{ minHeight: 200 }} placeholder="Faced with volatile fertilizer markets and growing pressure to anchor value creation on African soil, OCP's leadership weighs a generational bet…" value={form.abstract} onChange={(e) => update("abstract", e.target.value)} />
+        <textarea className="textarea" style={{ minHeight: 200 }} placeholder="Faced with volatile fertilizer markets and growing pressure to anchor value creation on African soil…" value={form.abstract} onChange={(e) => update("abstract", e.target.value)} />
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11, color: "var(--on-surface-variant)" }}>
           <span>{form.abstract.length < 60 ? <span style={{ color: "var(--primary)" }}>At least 60 characters</span> : "Looks good"}</span>
           <span className="tnum">{form.abstract.split(/\s+/).filter(Boolean).length} words</span>
@@ -226,9 +272,6 @@ function StepAbstract({ form, update }) {
       </Field>
       <Field label="Setting / Time Period" hint="Where and when the case is set. Helps reviewers contextualize.">
         <input className="input" placeholder="Casablanca, Khouribga & Jorf Lasfar · 2022–2025" value={form.setting} onChange={(e) => update("setting", e.target.value)} />
-      </Field>
-      <Field label="Co-authors">
-        <input className="input" placeholder="Dr. X (UM6P), Prof. Y (HEC Paris)…" value={form.coAuthors} onChange={(e) => update("coAuthors", e.target.value)} />
       </Field>
     </div>
   );
@@ -248,14 +291,12 @@ function StepFiles({ form, update }) {
   return (
     <div>
       <SectionHead title="Files & Materials" sub="Upload the case PDF (required) and any supporting materials." />
-
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
         <DropTile icon="file" label="Case PDF" sub="Required · 32 pages max" onClick={() => fakeUpload("case", "Case-draft")} />
         <DropTile icon="note" label="Teaching Note" sub="Optional · faculty-only" onClick={() => fakeUpload("tn", "Teaching-Note")} />
         <DropTile icon="grid" label="Excel Model" sub="Optional · sensitivity workbook" onClick={() => fakeUpload("xls", "Sensitivity-Model")} />
         <DropTile icon="video" label="Video Briefing" sub="Optional · ≤ 12 min" onClick={() => fakeUpload("video", "Protagonist-Interview")} />
       </div>
-
       <div className="label-caps label-caps-muted" style={{ marginBottom: 10 }}>Uploaded ({form.files.length})</div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {form.files.map((f) => (
@@ -288,16 +329,8 @@ function StepFiles({ form, update }) {
 function DropTile({ icon, label, sub, onClick }) {
   return (
     <button onClick={onClick} style={{
-      padding: "20px 18px",
-      border: "1.5px dashed var(--outline-variant)",
-      borderRadius: "var(--r-md)",
-      background: "white",
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      gap: 14,
-      textAlign: "left",
-      transition: "var(--t)",
+      padding: "20px 18px", border: "1.5px dashed var(--outline-variant)", borderRadius: "var(--r-md)",
+      background: "white", cursor: "pointer", display: "flex", alignItems: "center", gap: 14, textAlign: "left", transition: "var(--t)",
     }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary-container)"; e.currentTarget.style.background = "rgba(208,68,37,0.03)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--outline-variant)"; e.currentTarget.style.background = "white"; }}
@@ -319,7 +352,6 @@ function StepPedagogy({ form, update, updateAt, addItem, removeItem }) {
   return (
     <div>
       <SectionHead title="Teaching Plan" sub="The core of the teaching note — what students should walk away with." />
-
       <div style={{ marginBottom: 28 }}>
         <label className="label">Learning Objectives <span style={{ color: "var(--primary-container)" }}>*</span></label>
         <div style={{ fontSize: 12, color: "var(--on-surface-variant)", marginBottom: 10 }}>Add at least two. Start with verbs: "Evaluate…", "Apply…", "Diagnose…"</div>
@@ -364,11 +396,8 @@ function StepPedagogy({ form, update, updateAt, addItem, removeItem }) {
               padding: "10px 18px",
               border: `1.5px solid ${form.sessionMinutes === m ? "var(--primary-container)" : "var(--outline-variant)"}`,
               background: form.sessionMinutes === m ? "rgba(208,68,37,0.04)" : "white",
-              borderRadius: 8,
-              cursor: "pointer",
-              fontFamily: "Manrope",
-              fontWeight: form.sessionMinutes === m ? 700 : 500,
-              fontSize: 13,
+              borderRadius: 8, cursor: "pointer", fontFamily: "Manrope",
+              fontWeight: form.sessionMinutes === m ? 700 : 500, fontSize: 13,
             }} className="tnum">{m} min</button>
           ))}
         </div>
@@ -383,15 +412,17 @@ function StepReview({ form, update, stepValid, setStep }) {
     { step: 0, label: "Metadata", entries: [
       ["Title", form.title || "—"],
       ["Company / Country", `${form.company || "—"} · ${form.country || "—"}`],
+      ["Authors", form.authors.length > 0 ? form.authors.join(", ") : "—"],
       ["Discipline", form.discipline || "—"],
       ["Industry", form.industry || "—"],
-      ["Type / Difficulty", `${form.type} · ${form.difficulty}`],
+      ["Type / Level", `${form.type} · ${form.programLevel}`],
       ["Language", form.language],
+      ["African countries", form.countries.length > 0 ? form.countries.join(", ") : "—"],
+      ["Keywords", form.keywords.length > 0 ? form.keywords.join(", ") : "—"],
     ]},
     { step: 1, label: "Abstract", entries: [
       ["Abstract", `${form.abstract.split(/\s+/).filter(Boolean).length} words`],
       ["Setting", form.setting || "—"],
-      ["Co-authors", form.coAuthors || "Solo author"],
     ]},
     { step: 2, label: "Materials", entries: [
       ["Files attached", `${form.files.length} file${form.files.length === 1 ? "" : "s"}`],
@@ -408,7 +439,6 @@ function StepReview({ form, update, stepValid, setStep }) {
   return (
     <div>
       <SectionHead title="Review & Submit" sub="Last look before this enters the editorial queue." />
-
       {summary.map((s) => (
         <div key={s.step} className="card" style={{ padding: "16px 20px", marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
@@ -470,6 +500,7 @@ function Field({ label, required, hint, children }) {
 }
 
 function PreviewCard({ form }) {
+  const authorLine = form.authors.length > 0 ? form.authors.join(", ") : "—";
   return (
     <article className="card-shadow" style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -488,8 +519,17 @@ function PreviewCard({ form }) {
       <p style={{ fontSize: 12.5, color: "var(--on-surface-variant)", lineHeight: 1.55, margin: 0, display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: 60 }}>
         {form.abstract || "Abstract preview will appear once you write at least one paragraph."}
       </p>
+      {/* Item 7: keywords preview */}
+      {form.keywords.length > 0 && (
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+          {form.keywords.slice(0, 4).map(k => (
+            <span key={k} style={{ fontSize: 10, padding: "1px 6px", background: "var(--surface-container)", borderRadius: "var(--r-full)", color: "var(--on-surface-variant)", fontWeight: 500 }}>{k}</span>
+          ))}
+        </div>
+      )}
       <div style={{ paddingTop: 10, borderTop: "1px solid var(--outline-variant)", fontSize: 11, color: "var(--on-surface-variant)", display: "flex", justifyContent: "space-between" }}>
-        <span>{form.difficulty} · {form.language}</span>
+        {/* Item 3: show authors, Item 5: show program level */}
+        <span>{form.programLevel} · {form.language}</span>
         <span className="tnum">{form.year}</span>
       </div>
     </article>

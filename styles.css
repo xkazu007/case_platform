@@ -531,6 +531,28 @@ table.tbl {
   transform: rotate(-45deg) translate(2px, -4px);
 }
 
+/* Item 15: DO NOT COPY watermark on reader chunk cards */
+.do-not-copy {
+  overflow: hidden;
+}
+.do-not-copy::after {
+  content: "DO NOT COPY";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  font-size: 68px;
+  font-weight: 900;
+  font-family: 'Epilogue', sans-serif;
+  color: var(--on-surface);
+  opacity: 0.08;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  letter-spacing: 0.08em;
+  z-index: 2;
+}
+
 /* Misc */
 .kbd {
   display: inline-block;

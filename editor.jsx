@@ -1,11 +1,14 @@
 // Editor Dashboard
 const { Icon: EI } = window.ABS_UI;
-const { PENDING_REQUESTS, PUBLISHED, ACTIVITY } = window.ABS_DATA;
+const { PENDING_REQUESTS, PUBLISHED, ACTIVITY, PROGRAMS: INITIAL_PROGRAMS } = window.ABS_DATA;
 
 function EditorView({ pushToast, onSubmitNewCase }) {
   const [tab, setTab] = useState("requests");
   const [requests, setRequests] = useState(PENDING_REQUESTS);
   const [selected, setSelected] = useState(null);
+  // Item 2: programs state — admin can add to this list
+  const [programs, setPrograms] = useState(INITIAL_PROGRAMS);
+  const [newProgram, setNewProgram] = useState("");
 
   const approve = (r) => {
     setRequests(rs => rs.filter(x => x.id !== r.id));
@@ -16,6 +19,21 @@ function EditorView({ pushToast, onSubmitNewCase }) {
     setRequests(rs => rs.filter(x => x.id !== r.id));
     setSelected(null);
     pushToast?.(`Rejected · ${r.prof}'s request was returned with notes`, "warn");
+  };
+
+  const addProgram = () => {
+    const t = newProgram.trim();
+    if (!t || programs.includes(t)) return;
+    const updated = [...programs, t];
+    setPrograms(updated);
+    window.ABS_DATA.PROGRAMS = updated;
+    setNewProgram("");
+    pushToast?.(`Program "${t}" added to registry`, "ok");
+  };
+  const removeProgram = (p) => {
+    const updated = programs.filter(x => x !== p);
+    setPrograms(updated);
+    window.ABS_DATA.PROGRAMS = updated;
   };
 
   return (
@@ -46,6 +64,8 @@ function EditorView({ pushToast, onSubmitNewCase }) {
           { id:"requests", label:"Pending Requests", count: requests.length },
           { id:"pipeline", label:"Case Pipeline", count: PUBLISHED.length },
           { id:"activity", label:"Recent Activity" },
+          // Item 2: Registry tab for program management
+          { id:"registry", label:"Program Registry", count: programs.length },
         ].map(t => (
           <button key={t.id} onClick={()=>setTab(t.id)} style={{
             background:"transparent",border:0,padding:"14px 22px 14px 0",marginRight:24,
@@ -132,10 +152,19 @@ function EditorView({ pushToast, onSubmitNewCase }) {
                 <CheckItem warn label="Cohort size above class median (42 vs 28)"/>
               </ul>
 
-              <div style={{display:"flex",gap:8,marginTop:24}}>
-                <button className="btn btn-danger" style={{flex:1,justifyContent:"center"}} onClick={()=>reject(selected)}>Reject</button>
-                <button className="btn btn-success" style={{flex:1.5,justifyContent:"center"}} onClick={()=>approve(selected)}>
-                  <EI name="check" size={14}/> Approve & send link
+              {/* Item 14: action buttons including Contact mailto link */}
+              <div style={{display:"flex",gap:8,marginTop:24,flexWrap:"wrap"}}>
+                <a
+                  href={`mailto:${selected.email}?subject=Re%3A%20Case%20Request%20%E2%80%94%20${encodeURIComponent(selected.caseTitle)}`}
+                  className="btn btn-ghost btn-sm"
+                  title={`Email ${selected.prof}`}
+                  style={{display:"inline-flex",alignItems:"center",gap:6,textDecoration:"none"}}
+                >
+                  <EI name="mail" size={13}/> Contact
+                </a>
+                <button className="btn btn-danger btn-sm" style={{flex:1,justifyContent:"center"}} onClick={()=>reject(selected)}>Reject</button>
+                <button className="btn btn-success btn-sm" style={{flex:1.5,justifyContent:"center"}} onClick={()=>approve(selected)}>
+                  <EI name="check" size={13}/> Approve & send link
                 </button>
               </div>
             </aside>
@@ -190,6 +219,44 @@ function EditorView({ pushToast, onSubmitNewCase }) {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Item 2: Program Registry tab — admin-configurable programs list */}
+      {tab === "registry" && (
+        <div style={{maxWidth:600}}>
+          <div style={{marginBottom:20}}>
+            <h3 style={{margin:"0 0 6px",fontSize:20}}>Program Registry</h3>
+            <p className="muted" style={{fontSize:13,marginBottom:0}}>These programs appear in the request form when faculty submit a module request. Changes take effect immediately for new submissions.</p>
+          </div>
+          <div className="card" style={{padding:20,marginBottom:16}}>
+            <div style={{display:"flex",gap:10}}>
+              <input
+                className="input"
+                placeholder="Add a new program…"
+                value={newProgram}
+                onChange={e=>setNewProgram(e.target.value)}
+                onKeyDown={e=>{if(e.key==="Enter") addProgram();}}
+                style={{flex:1}}
+              />
+              <button className="btn btn-primary" onClick={addProgram} disabled={!newProgram.trim()} style={{opacity:newProgram.trim()?1:0.5}}>
+                <EI name="plus" size={13}/> Add
+              </button>
+            </div>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {programs.map(p => (
+              <div key={p} className="card" style={{padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+                <span style={{fontSize:14,fontWeight:500}}>{p}</span>
+                <button onClick={()=>removeProgram(p)} style={{background:"transparent",border:0,padding:4,cursor:"pointer",color:"var(--on-surface-variant)",display:"flex"}}>
+                  <EI name="x" size={14}/>
+                </button>
+              </div>
+            ))}
+          </div>
+          <div style={{marginTop:12,fontSize:12,color:"var(--on-surface-variant)"}}>
+            {programs.length} program{programs.length!==1?"s":""} · changes sync to the request form automatically
+          </div>
         </div>
       )}
     </div>

@@ -14,9 +14,58 @@ const INDUSTRIES = [
   ["IT & Telecom", 19], ["Mining & Natural Resources", 11], ["Public Administration & Nonprofits", 9]
 ];
 
-const GEO = [["Morocco", 42], ["Pan-Africa", 78], ["Global", 53]];
 const LANGS = [["English", 124], ["French", 89]];
-const DIFFS = [["Core", 64], ["Advanced", 71], ["Executive", 38]];
+
+// Program levels — replaces Difficulty. Admin-configurable via Editor Dashboard.
+const PROGRAM_LEVELS = [
+  ["Bachelor", 18],
+  ["Pre-experience Masters", 42],
+  ["Post-experience Masters", 54],
+  ["Advanced Executive Education", 43]
+];
+
+// Admin-configurable programs list — manage via Editor Dashboard → Registry tab
+const PROGRAMS = [
+  "MBA",
+  "EMBA",
+  "MSc Finance",
+  "MSc Sustainability",
+  "Executive Certificate · Pan-African Leadership",
+  "Doctoral Program"
+];
+
+// African country filter sidebar counts
+const AFRICAN_COUNTRY_COUNTS = [
+  ["Morocco", 42], ["Algeria", 8], ["Tunisia", 11], ["Egypt", 16], ["South Africa", 19],
+  ["Nigeria", 24], ["Kenya", 18], ["Ghana", 14], ["Ethiopia", 9], ["Senegal", 12],
+  ["Côte d'Ivoire", 10], ["Rwanda", 8], ["Tanzania", 7], ["Uganda", 6],
+  ["Cameroon", 5], ["Angola", 4], ["Mozambique", 3], ["Zimbabwe", 4], ["Zambia", 3],
+  ["Mali", 5], ["Burkina Faso", 4], ["Mauritius", 7], ["Botswana", 3],
+  ["Namibia", 4], ["Other", 11]
+];
+
+const AFRICAN_COUNTRIES = AFRICAN_COUNTRY_COUNTS.map(([c]) => c);
+
+const CASE_TYPES_LIST = [
+  "Field Case",
+  "Library Case",
+  "Fictitious Case",
+  "Compact · 1–5p",
+  "Compact · 6–10p",
+  "Compact · 10+p",
+  "Video Case"
+];
+
+const KEYWORD_SUGGESTIONS = [
+  "vertical integration", "capital allocation", "Africa", "pan-Africa", "strategy",
+  "family business", "succession", "governance", "banking", "financial inclusion",
+  "fintech", "solar energy", "asset financing", "off-grid", "credit risk",
+  "cement", "pricing", "AfCFTA", "retail", "hypermarket", "digital disruption",
+  "telecom", "market entry", "regulation", "pharmaceuticals", "biosimilars",
+  "supply chain", "make-or-buy", "e-commerce", "tech startup", "profitability",
+  "phosphate", "agribusiness", "last mile", "competitive strategy", "consumer behavior",
+  "investor relations", "conglomerate", "duopoly", "business model", "sustainability"
+];
 
 const CASES = [
   {
@@ -24,18 +73,19 @@ const CASES = [
     title: "OCP Group: Phosphate, Power and the Pan-African Pivot",
     company: "OCP Group",
     country: "Morocco",
+    countries: ["Morocco"],
     discipline: "Strategy",
     industry: "Mining & Natural Resources",
-    geo: "Pan-Africa",
     type: "Field Case",
     abstract: "Faced with volatile fertilizer markets and growing pressure to anchor value creation on African soil, OCP's leadership weighs a generational bet: vertical integration into downstream agri-services across twelve African countries while defending its global phosphate franchise.",
-    author: "Dr. Salma Bennani",
+    authors: ["Dr. Salma Bennani"],
     institution: "Africa Business School, UM6P",
     year: 2025,
-    difficulty: "Advanced",
+    programLevel: "Post-experience Masters",
     language: "English",
     readingMin: 38,
-    flags: { bestseller: true, classic: false, isNew: true, hasTN: true, hasVideo: true },
+    keywords: ["phosphate", "vertical integration", "Africa", "capital allocation", "agribusiness"],
+    flags: { bestseller: true, isNew: true, hasTN: true, hasVideo: true },
     usage: { times: 47, programs: 12 },
   },
   {
@@ -43,18 +93,19 @@ const CASES = [
     title: "Attijariwafa Bank: Banking the Unbanked from Casablanca to Kigali",
     company: "Attijariwafa Bank",
     country: "Morocco / 14 markets",
+    countries: ["Morocco", "Senegal", "Côte d'Ivoire", "Rwanda", "Other"],
     discipline: "Finance",
     industry: "Financial Services",
-    geo: "Pan-Africa",
     type: "Field Case",
     abstract: "A regional banking champion confronts a fork in the road: scale a low-margin retail network across francophone Africa, or pivot toward a digital-first wholesale model. The CFO must defend a five-year capital plan to a skeptical board.",
-    author: "Prof. Youssef El Amrani",
+    authors: ["Prof. Youssef El Amrani"],
     institution: "Africa Business School, UM6P",
     year: 2024,
-    difficulty: "Advanced",
+    programLevel: "Post-experience Masters",
     language: "English",
     readingMin: 32,
-    flags: { bestseller: true, classic: false, isNew: false, hasTN: true, hasVideo: false },
+    keywords: ["banking", "financial inclusion", "pan-Africa", "capital planning", "fintech"],
+    flags: { bestseller: true, isNew: false, hasTN: true, hasVideo: false },
     usage: { times: 63, programs: 18 },
   },
   {
@@ -62,18 +113,19 @@ const CASES = [
     title: "M-KOPA: Pay-as-you-Go Solar at the Edge of the Grid",
     company: "M-KOPA",
     country: "Kenya",
+    countries: ["Kenya", "Tanzania", "Uganda", "Nigeria"],
     discipline: "Entrepreneurship",
     industry: "Energy & Transition",
-    geo: "Pan-Africa",
-    type: "Published Case",
+    type: "Field Case",
     abstract: "From a 2011 pilot in rural Kenya to four million households a decade later, M-KOPA's asset-financing model rewrote the rules of off-grid energy. The case examines the unit economics, credit risk innovations, and the next frontier: smartphones.",
-    author: "Dr. Aïsha Diop",
+    authors: ["Dr. Aïsha Diop"],
     institution: "Africa Business School, UM6P",
     year: 2025,
-    difficulty: "Core",
+    programLevel: "Pre-experience Masters",
     language: "English",
     readingMin: 26,
-    flags: { bestseller: false, classic: true, isNew: true, hasTN: true, hasVideo: true },
+    keywords: ["solar energy", "asset financing", "off-grid", "credit risk", "last mile"],
+    flags: { bestseller: false, isNew: true, hasTN: true, hasVideo: true },
     usage: { times: 89, programs: 22 },
   },
   {
@@ -81,18 +133,19 @@ const CASES = [
     title: "Dangote Cement: Pricing Power in a Continental Duopoly",
     company: "Dangote Industries",
     country: "Nigeria",
+    countries: ["Nigeria", "Ghana"],
     discipline: "Strategy",
     industry: "Industrial",
-    geo: "Pan-Africa",
     type: "Field Case",
     abstract: "Aliko Dangote's cement empire commands forty percent of Sub-Saharan capacity. As the AfCFTA opens cross-border flows and Chinese entrants eye West Africa, the executive committee debates whether to compete on price, quality, or carbon.",
-    author: "Prof. Karim Tazi",
+    authors: ["Prof. Karim Tazi"],
     institution: "Africa Business School, UM6P",
     year: 2024,
-    difficulty: "Advanced",
+    programLevel: "Post-experience Masters",
     language: "English",
     readingMin: 41,
-    flags: { bestseller: true, classic: false, isNew: false, hasTN: true, hasVideo: false },
+    keywords: ["cement", "pricing", "duopoly", "AfCFTA", "competitive strategy"],
+    flags: { bestseller: true, isNew: false, hasTN: true, hasVideo: false },
     usage: { times: 71, programs: 16 },
   },
   {
@@ -100,18 +153,19 @@ const CASES = [
     title: "Marjane: Reinventing Modern Trade in a Souk Economy",
     company: "Marjane Holding",
     country: "Morocco",
+    countries: ["Morocco"],
     discipline: "Marketing",
     industry: "Goods & Consumer Services",
-    geo: "Morocco",
     type: "Field Case",
     abstract: "Two decades after Morocco's first hypermarket opened on the outskirts of Rabat, Marjane faces a quiet crisis: digital-native rivals, shifting demographics, and the persistent gravitational pull of the traditional souk.",
-    author: "Dr. Nadia Berrada",
+    authors: ["Dr. Nadia Berrada"],
     institution: "Africa Business School, UM6P",
     year: 2025,
-    difficulty: "Core",
+    programLevel: "Pre-experience Masters",
     language: "French",
     readingMin: 22,
-    flags: { bestseller: false, classic: false, isNew: true, hasTN: true, hasVideo: false },
+    keywords: ["retail", "hypermarket", "Morocco", "digital disruption", "consumer behavior"],
+    flags: { bestseller: false, isNew: true, hasTN: true, hasVideo: false },
     usage: { times: 28, programs: 9 },
   },
   {
@@ -119,18 +173,19 @@ const CASES = [
     title: "Safaricom Ethiopia: A License, a Country, a Bet",
     company: "Safaricom Group",
     country: "Ethiopia",
+    countries: ["Ethiopia", "Kenya"],
     discipline: "International Business",
     industry: "IT & Telecom",
-    geo: "Pan-Africa",
     type: "Field Case",
     abstract: "When Ethiopia opened its telecoms sector in 2021, Safaricom paid US$850 million for the right to compete with a state monopoly serving 120 million people. Three years in, the CEO must defend the burn rate to investors.",
-    author: "Prof. Mehdi Ouali",
+    authors: ["Prof. Mehdi Ouali"],
     institution: "Africa Business School, UM6P",
     year: 2024,
-    difficulty: "Executive",
+    programLevel: "Advanced Executive Education",
     language: "English",
     readingMin: 36,
-    flags: { bestseller: false, classic: false, isNew: false, hasTN: true, hasVideo: true },
+    keywords: ["telecom", "market entry", "regulation", "investor relations", "Ethiopia"],
+    flags: { bestseller: false, isNew: false, hasTN: true, hasVideo: true },
     usage: { times: 34, programs: 11 },
   },
   {
@@ -138,18 +193,19 @@ const CASES = [
     title: "Sothema: Compounding Sovereignty in African Pharmaceuticals",
     company: "Sothema Laboratories",
     country: "Morocco",
+    countries: ["Morocco", "Senegal"],
     discipline: "Operations Management",
     industry: "Healthcare",
-    geo: "Morocco",
     type: "Field Case",
     abstract: "After COVID-19 exposed the continent's pharmaceutical fragility, Sothema launched a continental supply strategy. The case follows the COO through a make-or-buy decision on biosimilar capacity in Casablanca and Dakar.",
-    author: "Dr. Hicham Filali",
+    authors: ["Dr. Hicham Filali"],
     institution: "Africa Business School, UM6P",
     year: 2025,
-    difficulty: "Advanced",
+    programLevel: "Post-experience Masters",
     language: "English",
     readingMin: 29,
-    flags: { bestseller: false, classic: false, isNew: true, hasTN: true, hasVideo: false },
+    keywords: ["pharmaceuticals", "biosimilars", "supply chain", "Africa", "make-or-buy"],
+    flags: { bestseller: false, isNew: true, hasTN: true, hasVideo: false },
     usage: { times: 19, programs: 7 },
   },
   {
@@ -157,18 +213,19 @@ const CASES = [
     title: "Jumia: The Long Walk to Profitability",
     company: "Jumia Technologies",
     country: "Pan-African (14 markets)",
+    countries: ["Nigeria", "Kenya", "Egypt", "Morocco", "Ghana", "Other"],
     discipline: "Entrepreneurship",
     industry: "IT & Telecom",
-    geo: "Pan-Africa",
-    type: "Published Case",
+    type: "Library Case",
     abstract: "Africa's first NYSE-listed tech company has burned through nine figures in pursuit of a continental e-commerce thesis. As the new CEO trims geographies and headcount, students debate whether the model was wrong or simply early.",
-    author: "Prof. Leila Benkirane",
+    authors: ["Prof. Leila Benkirane"],
     institution: "Africa Business School, UM6P",
     year: 2024,
-    difficulty: "Core",
+    programLevel: "Pre-experience Masters",
     language: "English",
     readingMin: 24,
-    flags: { bestseller: true, classic: true, isNew: false, hasTN: true, hasVideo: true },
+    keywords: ["e-commerce", "tech startup", "Africa", "profitability", "business model"],
+    flags: { bestseller: true, isNew: false, hasTN: true, hasVideo: true },
     usage: { times: 102, programs: 27 },
   },
   {
@@ -176,18 +233,19 @@ const CASES = [
     title: "Akwa Group: Family, Foundation, and the Family Office",
     company: "Akwa Group",
     country: "Morocco",
+    countries: ["Morocco"],
     discipline: "General Management",
     industry: "Energy & Transition",
-    geo: "Morocco",
     type: "Field Case",
     abstract: "A second-generation succession at one of Morocco's largest privately held conglomerates raises a familiar question with continental implications: how do African family firms institutionalize without losing their soul?",
-    author: "Dr. Amina Sefrioui",
+    authors: ["Dr. Amina Sefrioui", "Prof. Karim Tazi"],
     institution: "Africa Business School, UM6P",
     year: 2025,
-    difficulty: "Executive",
+    programLevel: "Advanced Executive Education",
     language: "French",
     readingMin: 33,
-    flags: { bestseller: false, classic: false, isNew: true, hasTN: true, hasVideo: false },
+    keywords: ["family business", "succession", "governance", "Morocco", "conglomerate"],
+    flags: { bestseller: false, isNew: true, hasTN: true, hasVideo: false },
     usage: { times: 22, programs: 8 },
   },
 ];
@@ -260,11 +318,11 @@ const TEACHING_NOTE = {
 };
 
 const PENDING_REQUESTS = [
-  { id: "r1", caseTitle: "OCP Group: Phosphate, Power and the Pan-African Pivot", prof: "Prof. Mounia Cherkaoui", module: "Strategy in Emerging Markets", program: "EMBA", students: 42, date: "May 4, 2026" },
-  { id: "r2", caseTitle: "M-KOPA: Pay-as-you-Go Solar at the Edge of the Grid", prof: "Prof. Daniel Otieno", module: "Inclusive Innovation", program: "MSc Sustainability", students: 28, date: "May 3, 2026" },
-  { id: "r3", caseTitle: "Attijariwafa Bank: Banking the Unbanked", prof: "Prof. Réda Lahlou", module: "Financial Institutions in Africa", program: "MBA", students: 56, date: "May 2, 2026" },
-  { id: "r4", caseTitle: "Marjane: Reinventing Modern Trade", prof: "Prof. Houda Idrissi", module: "Retail Strategy", program: "Executive Certificate", students: 19, date: "Apr 30, 2026" },
-  { id: "r5", caseTitle: "Safaricom Ethiopia: A License, a Country, a Bet", prof: "Prof. Wanjiru Kamau", module: "Cross-Border Strategy", program: "EMBA", students: 38, date: "Apr 29, 2026" },
+  { id: "r1", caseTitle: "OCP Group: Phosphate, Power and the Pan-African Pivot", prof: "Prof. Mounia Cherkaoui", email: "m.cherkaoui@um6p.ma", module: "Strategy in Emerging Markets", program: "EMBA", students: 42, date: "May 4, 2026" },
+  { id: "r2", caseTitle: "M-KOPA: Pay-as-you-Go Solar at the Edge of the Grid", prof: "Prof. Daniel Otieno", email: "d.otieno@um6p.ma", module: "Inclusive Innovation", program: "MSc Sustainability", students: 28, date: "May 3, 2026" },
+  { id: "r3", caseTitle: "Attijariwafa Bank: Banking the Unbanked", prof: "Prof. Réda Lahlou", email: "r.lahlou@um6p.ma", module: "Financial Institutions in Africa", program: "MBA", students: 56, date: "May 2, 2026" },
+  { id: "r4", caseTitle: "Marjane: Reinventing Modern Trade", prof: "Prof. Houda Idrissi", email: "h.idrissi@um6p.ma", module: "Retail Strategy", program: "Executive Certificate", students: 19, date: "Apr 30, 2026" },
+  { id: "r5", caseTitle: "Safaricom Ethiopia: A License, a Country, a Bet", prof: "Prof. Wanjiru Kamau", email: "w.kamau@um6p.ma", module: "Cross-Border Strategy", program: "EMBA", students: 38, date: "Apr 29, 2026" },
 ];
 
 const PUBLISHED = [
@@ -286,7 +344,9 @@ const ACTIVITY = [
 ];
 
 window.ABS_DATA = {
-  DISCIPLINES, INDUSTRIES, GEO, LANGS, DIFFS,
+  DISCIPLINES, INDUSTRIES, LANGS,
+  PROGRAM_LEVELS, AFRICAN_COUNTRY_COUNTS, AFRICAN_COUNTRIES, CASE_TYPES_LIST, PROGRAMS,
+  KEYWORD_SUGGESTIONS,
   CASES, READER_SECTIONS, READER_BODY, TEACHING_NOTE,
   PENDING_REQUESTS, PUBLISHED, ACTIVITY
 };
